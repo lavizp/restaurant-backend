@@ -7,6 +7,6 @@ export const devConfig: PostgresConnectionOptions = {
   username: 'postgres',
   password: '123',
   database: 'nest',
-  entities: ['dist/**/*.entity{.ts,.js}'],
+  entities: [],
   synchronize: true,
 };
