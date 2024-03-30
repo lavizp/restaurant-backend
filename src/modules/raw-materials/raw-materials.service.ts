@@ -9,20 +9,27 @@ import { Repository } from 'typeorm';
 export class RawMaterialsService {
   constructor(
     @InjectRepository(RawMaterial)
-    private rawMaterialReposotory: Repository<CreateRawMaterialDto>,
+    private rawMaterialReposotory: Repository<RawMaterial>,
   ) {}
   create(createRawMaterialDto: CreateRawMaterialDto) {
-    return this.rawMaterialReposotory.save(
-      this.rawMaterialReposotory.create(createRawMaterialDto),
-    );
+    const newMaterial = this.rawMaterialReposotory.create(createRawMaterialDto);
+    console.log(newMaterial);
+    return this.rawMaterialReposotory.insert(newMaterial);
   }
 
-  findAll() {
-    return this.rawMaterialReposotory.find();
+  findAll(userId: number) {
+    return this.rawMaterialReposotory
+      .createQueryBuilder('rawMaterial')
+      .innerJoin('rawMaterial.user', 'user')
+      .where('user.id = :userId', { userId })
+      .getMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} rawMaterial`;
+  async findOne(id: number) {
+    const rawMaterial = await this.rawMaterialReposotory.findOne({
+      where: { id: id },
+    });
+    return rawMaterial;
   }
 
   update(id: number, updateRawMaterialDto: UpdateRawMaterialDto) {

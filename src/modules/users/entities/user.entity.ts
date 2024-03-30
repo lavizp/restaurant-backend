@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { RawMaterial } from 'src/modules/raw-materials/entities/raw-material.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity('User')
 export class User {
@@ -13,4 +14,7 @@ export class User {
 
   @Column({ nullable: true })
   password: string;
+
+  @OneToMany(() => RawMaterial, (rawMaterial) => rawMaterial.user)
+  rawMaterials: RawMaterial[];
 }

@@ -6,11 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { RawMaterialsService } from './raw-materials.service';
 import { CreateRawMaterialDto } from './dto/create-raw-material.dto';
 import { UpdateRawMaterialDto } from './dto/update-raw-material.dto';
-
+import { AuthGuard } from 'src/libs/auth/auth.guard';
+import * as jwt from 'jsonwebtoken';
 @Controller('raw-materials')
 export class RawMaterialsController {
   constructor(private readonly rawMaterialsService: RawMaterialsService) {}
@@ -19,10 +22,14 @@ export class RawMaterialsController {
   create(@Body() createRawMaterialDto: CreateRawMaterialDto) {
     return this.rawMaterialsService.create(createRawMaterialDto);
   }
-
+  @UseGuards(AuthGuard)
   @Get()
-  findAll() {
-    return this.rawMaterialsService.findAll();
+  findAll(@Req() request: Request) {
+    const bearerToken = request.headers['authorization'];
+    const [bearer, token] = bearerToken.split(' ');
+    if (bearer !== 'Bearer') return;
+    const userId = jwt.decode(token)['id'];
+    return this.rawMaterialsService.findAll(+userId);
   }
 
   @Get(':id')

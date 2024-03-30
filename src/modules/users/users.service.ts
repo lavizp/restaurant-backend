@@ -7,11 +7,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { verify } from 'jsonwebtoken';
+// import { verify } from 'jsonwebtoken';
 import { AuthService } from 'src/libs/auth/auth.service';
 import { HelperService } from 'src/common/helpers/helpers.utils';
 import { SignInUserDto } from './dto/signin-user.dto';
 import { SignUpUserDto } from './dto/signup-user.dto';
+import { Response } from 'src/common/response.utils';
 @Injectable()
 export class UsersService {
   constructor(
@@ -19,17 +20,21 @@ export class UsersService {
     private userReposotory: Repository<User>,
     private readonly authService: AuthService,
   ) {}
-  create(createUserDto: SignUpUserDto) {
-    return this.userReposotory.save(this.userReposotory.create(createUserDto));
-  }
+  // create(createUserDto: SignUpUserDto) {
+  //   return this.userReposotory.insert(
+  //     this.userReposotory.create(createUserDto),
+  //   );
+  // }
 
   async signUpUser(signUpUser: SignUpUserDto) {
     const newUser = this.userReposotory.create(signUpUser);
-    this.userReposotory.save(newUser);
-    return await this.signInUser({
+    this.userReposotory.insert(newUser);
+    console.log(newUser);
+    const data = await this.signInUser({
       email: newUser.email,
       password: newUser.password,
     });
+    return Response(true, 'User created successfully', data, 201);
   }
 
   async signInUser(createUserDto: SignInUserDto) {
@@ -41,7 +46,12 @@ export class UsersService {
     const passwordValid = user.password == createUserDto.password;
     if (!passwordValid) throw new BadRequestException('Password is incorrect');
     const userJwtAccessToken = await this.authService.getUserJwt(user);
-    return HelperService.buildPayloadResponse(user, userJwtAccessToken, null);
+    const data = HelperService.buildPayloadResponse(
+      user,
+      userJwtAccessToken,
+      null,
+    );
+    return Response(true, 'User created successfully', data, 201);
   }
   findAll() {
     return this.userReposotory.find();

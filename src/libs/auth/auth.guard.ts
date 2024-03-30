@@ -1,25 +1,33 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Observable } from 'rxjs';
-import { User } from 'src/modules/users/entities/user.entity';
-import { Repository } from 'typeorm';
-import { Request } from 'express';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
+
+import { AuthService } from './auth.service';
+
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+  constructor(private readonly authService: AuthService) {}
 
-    private jwtService: JwtService,
-  ) {}
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    throw new Error('Method not implemented.');
-  }
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    try {
+      const request = context.switchToHttp().getRequest();
+      const { authorization }: any = request.headers;
+      if (!authorization || authorization.trim() === '') {
+        throw new UnauthorizedException('Please provide token');
+      }
+      const authToken = authorization.replace(/bearer/gim, '').trim();
+      const resp = await this.authService.validateToken(authToken);
+      request.decodedData = resp;
+      return true;
+    } catch (error) {
+      console.log('auth error - ', error.message);
+      throw new ForbiddenException(
+        error.message || 'session expired! Please sign In',
+      );
+    }
   }
 }
